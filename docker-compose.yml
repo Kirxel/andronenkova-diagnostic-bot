@@ -53,5 +53,27 @@ services:
       api:
         condition: service_started
 
+  miniapp:
+    image: node:22-bullseye
+    restart: unless-stopped
+    working_dir: /workspace/apps/miniapp
+    env_file:
+      - .env
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+      VITE_USE_MOCK_API: ${VITE_USE_MOCK_API:-false}
+    volumes:
+      - .:/workspace
+    command: >
+      sh -c "corepack enable &&
+      pnpm approve-builds --all &&
+      pnpm install &&
+      pnpm dev --host 0.0.0.0 --port 4173"
+    ports:
+      - "4173:4173"
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   postgres_data:
