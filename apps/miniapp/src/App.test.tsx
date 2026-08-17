@@ -32,6 +32,8 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
     await user.click(screen.getByLabelText("25-34"));
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
+    await user.type(screen.getByPlaceholderText("Например, 170"), "170");
+    await user.click(screen.getByRole("button", { name: "Продолжить" }));
     await user.type(screen.getByPlaceholderText("Например, 68"), "65");
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
     await user.click(screen.getByLabelText("Свой вариант"));

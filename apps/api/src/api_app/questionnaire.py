@@ -5,7 +5,8 @@ from typing import Any
 
 QUESTION_RULES: dict[str, dict[str, Any]] = {
     "sex": {"type": "choice", "choices": {"female", "male"}},
-    "ageRange": {"type": "choice", "choices": {"18-24", "25-34", "35-44", "45+"}},
+    "ageRange": {"type": "choice", "choices": {"under-16", "18-24", "25-34", "35-44", "45+"}},
+    "heightCm": {"type": "number", "min": 100, "max": 250},
     "weightKg": {"type": "number", "min": 30, "max": 300},
     "goal": {
         "type": "choice_or_detail",
@@ -82,4 +83,3 @@ def validate_answers(answers: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Unsupported question type for {question_id}")
 
     return normalized
-

@@ -16,11 +16,22 @@ export const questions: Question[] = [
     kind: "choice",
     title: "Какой у тебя возрастной диапазон?",
     options: [
+      { value: "under-16", label: "До 16 лет" },
       { value: "18-24", label: "18-24" },
       { value: "25-34", label: "25-34" },
       { value: "35-44", label: "35-44" },
       { value: "45+", label: "45+" }
     ]
+  },
+  {
+    id: "heightCm",
+    kind: "number",
+    title: "Укажи текущий рост",
+    description: "Это нужно только для более точного понимания исходных данных.",
+    min: 100,
+    max: 250,
+    placeholder: "Например, 170",
+    unit: "см"
   },
   {
     id: "weightKg",
@@ -142,4 +153,3 @@ export const questions: Question[] = [
     ]
   }
 ];
-

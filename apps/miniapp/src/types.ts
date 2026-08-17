@@ -1,6 +1,7 @@
 export type QuestionId =
   | "sex"
   | "ageRange"
+  | "heightCm"
   | "weightKg"
   | "goal"
   | "injuries"

@@ -25,6 +25,7 @@ def build_trainer_message(payload: TrainerNotificationPayload) -> str:
     answer_lines = [
         f"Пол: {payload.answers['sex']}",
         f"Возраст: {payload.answers['ageRange']}",
+        f"Рост: {payload.answers['heightCm']} см",
         f"Вес: {payload.answers['weightKg']} кг",
         f"Цель: {payload.answers['goal']}",
         f"Ограничения: {payload.answers['injuries']}",

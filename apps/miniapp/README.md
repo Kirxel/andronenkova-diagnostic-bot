@@ -23,6 +23,12 @@ pnpm install
 pnpm dev
 ```
 
+Or with Docker Compose from the repository root:
+
+```bash
+docker compose up miniapp
+```
+
 ## Submission contract
 
 The Mini App posts to:
