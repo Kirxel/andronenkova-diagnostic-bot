@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: daria_diagnostic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d daria_diagnostic"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: python:3.11-slim
+    restart: unless-stopped
+    working_dir: /workspace/apps/api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/daria_diagnostic}
+    volumes:
+      - .:/workspace
+    command: >
+      sh -c "pip install -r requirements.txt &&
+      PYTHONPATH=src alembic upgrade head &&
+      PYTHONPATH=src uvicorn api_app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bot:
+    image: python:3.11-slim
+    restart: unless-stopped
+    working_dir: /workspace/apps/bot
+    env_file:
+      - .env
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-http://api:8000}
+    volumes:
+      - .:/workspace
+    command: >
+      sh -c "pip install -r requirements.txt &&
+      PYTHONPATH=src python -m bot_app.main"
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
