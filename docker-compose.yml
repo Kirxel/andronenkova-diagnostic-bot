@@ -54,23 +54,16 @@ services:
         condition: service_started
 
   miniapp:
-    image: node:22-bullseye
+    build:
+      context: ./apps/miniapp
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://andronenkova.ru}
+        VITE_USE_MOCK_API: ${VITE_USE_MOCK_API:-false}
+    image: daria-diagnostic-miniapp:latest
     restart: unless-stopped
-    working_dir: /workspace/apps/miniapp
-    env_file:
-      - .env
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
-      VITE_USE_MOCK_API: ${VITE_USE_MOCK_API:-false}
-    volumes:
-      - .:/workspace
-    command: >
-      sh -c "corepack enable &&
-      pnpm approve-builds --all &&
-      pnpm install &&
-      pnpm dev --host 0.0.0.0 --port 4173"
     ports:
-      - "4173:4173"
+      - "4173:80"
     depends_on:
       api:
         condition: service_started
