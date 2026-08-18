@@ -7,6 +7,7 @@ import { submitDiagnostic } from "./lib/api";
 import { clearDraft, loadDraft, saveDraft } from "./lib/storage";
 import {
   applyTelegramTheme,
+  ensureTelegramWebApp,
   initializeTelegramApp,
   readTelegramContext
 } from "./lib/telegram";
@@ -30,11 +31,25 @@ export default function App() {
   const currentQuestion = questions[currentIndex];
 
   useEffect(() => {
-    return initializeTelegramApp(() => {
-      const nextContext = readTelegramContext();
-      setTelegramContext(nextContext);
-      applyTelegramTheme(nextContext);
+    let cleanup: () => void = () => {};
+    let isMounted = true;
+
+    void ensureTelegramWebApp().then(() => {
+      if (!isMounted) {
+        return;
+      }
+
+      cleanup = initializeTelegramApp(() => {
+        const nextContext = readTelegramContext();
+        setTelegramContext(nextContext);
+        applyTelegramTheme(nextContext);
+      });
     });
+
+    return () => {
+      isMounted = false;
+      cleanup();
+    };
   }, []);
 
   useEffect(() => {
@@ -190,4 +205,3 @@ export default function App() {
     </main>
   );
 }
-

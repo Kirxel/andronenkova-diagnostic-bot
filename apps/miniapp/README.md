@@ -20,13 +20,14 @@ React + Vite Telegram Mini App scaffold for Daria Andronenkova's diagnostic flow
 ```bash
 cd apps/miniapp
 pnpm install
-pnpm dev
+pnpm build
+pnpm preview --host 0.0.0.0 --port 4173
 ```
 
-Or with Docker Compose from the repository root:
+Or with Docker Compose from the repository root in production-style mode:
 
 ```bash
-docker compose up miniapp
+docker compose up --build miniapp
 ```
 
 ## Submission contract
@@ -54,8 +55,13 @@ The frontend never decides the Telegram user identity on its own. The backend mu
 
 ## Local stack
 
-For local PostgreSQL + API + bot startup, copy `.env.example` to `.env` and run:
+For local PostgreSQL + API + bot + production Mini App startup, copy `.env.example` to `.env` and run:
 
 ```bash
 docker compose up
 ```
+
+## Production Notes
+
+- The `miniapp` Docker Compose service builds a static production bundle and serves it with `nginx`.
+- This avoids Telegram mobile issues caused by Vite dev mode and HMR/websocket behavior inside the Telegram WebView.

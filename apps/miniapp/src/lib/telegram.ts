@@ -48,12 +48,64 @@ const defaultSafeArea = {
   right: 0
 };
 
+const TELEGRAM_SCRIPT_SRC = "https://telegram.org/js/telegram-web-app.js?63";
+
 export function getTelegramWebApp(): TelegramWebApp | null {
   if (typeof window === "undefined") {
     return null;
   }
 
   return (window as TelegramWindow).Telegram?.WebApp ?? null;
+}
+
+export async function ensureTelegramWebApp(timeoutMs = 2500): Promise<void> {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+
+  if (getTelegramWebApp()) {
+    return;
+  }
+
+  const existingScript = document.querySelector<HTMLScriptElement>(
+    `script[src="${TELEGRAM_SCRIPT_SRC}"]`
+  );
+
+  if (existingScript) {
+    await waitForTelegramWebApp(timeoutMs);
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = TELEGRAM_SCRIPT_SRC;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+
+  await waitForTelegramWebApp(timeoutMs);
+}
+
+function waitForTelegramWebApp(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (getTelegramWebApp()) {
+      resolve();
+      return;
+    }
+
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      if (getTelegramWebApp()) {
+        window.clearInterval(interval);
+        resolve();
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        window.clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+  });
 }
 
 export function readTelegramContext(): TelegramContext {
@@ -134,4 +186,3 @@ export function applyTelegramTheme(context: TelegramContext): void {
   root.style.setProperty("--safe-area-left", `${safeArea.left}px`);
   root.style.setProperty("--safe-area-right", `${safeArea.right}px`);
 }
-
