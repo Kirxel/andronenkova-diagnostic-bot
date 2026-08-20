@@ -39,6 +39,7 @@ export type TelegramContext = {
   isAvailable: boolean;
   initData: string;
   startParam: string | null;
+  username: string | null;
   theme: TelegramThemeParams;
   themeMode: TelegramThemeMode;
   safeArea: Required<TelegramSafeAreaInset>;
@@ -114,12 +115,14 @@ function waitForTelegramWebApp(timeoutMs: number): Promise<void> {
 export function readTelegramContext(): TelegramContext {
   const webApp = getTelegramWebApp();
   const params = new URLSearchParams(window.location.search);
+  const initData = webApp?.initData ?? "";
   const theme = webApp?.themeParams ?? {};
 
   return {
     isAvailable: Boolean(webApp),
-    initData: webApp?.initData ?? "",
+    initData,
     startParam: params.get("tgWebAppStartParam"),
+    username: readTelegramUsername(initData),
     theme,
     themeMode: resolveThemeMode(theme),
     safeArea: {
@@ -233,4 +236,25 @@ function getRelativeLuminance([red, green, blue]: [number, number, number]): num
   });
 
   return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function readTelegramUsername(initData: string): string | null {
+  if (!initData) {
+    return null;
+  }
+
+  const params = new URLSearchParams(initData);
+  const userRaw = params.get("user");
+  if (!userRaw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(userRaw) as { username?: unknown };
+    return typeof parsed.username === "string" && parsed.username.trim()
+      ? parsed.username.trim()
+      : null;
+  } catch {
+    return null;
+  }
 }

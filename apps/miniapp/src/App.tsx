@@ -2,7 +2,7 @@ import { startTransition, useEffect, useState } from "react";
 import { ProgressBar } from "./components/ProgressBar";
 import { QuestionCard } from "./components/QuestionCard";
 import { StatusPanel } from "./components/StatusPanel";
-import { questions } from "./questions";
+import { getQuestions } from "./questions";
 import { submitDiagnostic } from "./lib/api";
 import { clearDraft, loadDraft, saveDraft } from "./lib/storage";
 import {
@@ -21,12 +21,16 @@ import type { AnswerMap, DraftAnswer } from "./types";
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
 export default function App() {
+  const initialTelegramContext = readTelegramContext();
   const [answers, setAnswers] = useState<AnswerMap>(() => loadDraft());
-  const [currentIndex, setCurrentIndex] = useState(() => getFirstIncompleteQuestionIndex(loadDraft()));
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    getFirstIncompleteQuestionIndex(getQuestions(initialTelegramContext), loadDraft())
+  );
   const [error, setError] = useState<string | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [telegramContext, setTelegramContext] = useState(() => readTelegramContext());
+  const [telegramContext, setTelegramContext] = useState(initialTelegramContext);
+  const questions = getQuestions(telegramContext);
 
   const currentQuestion = questions[currentIndex];
 
@@ -55,6 +59,10 @@ export default function App() {
   useEffect(() => {
     saveDraft(answers);
   }, [answers]);
+
+  useEffect(() => {
+    setCurrentIndex((previous) => Math.min(previous, questions.length - 1));
+  }, [questions.length]);
 
   function updateAnswer(questionId: string, next: DraftAnswer) {
     setError(null);
@@ -103,7 +111,7 @@ export default function App() {
       await submitDiagnostic({
         initData: telegramContext.initData,
         startParam: telegramContext.startParam,
-        answers: serializeAnswers(answers)
+        answers: serializeAnswers(questions, answers)
       });
 
       clearDraft();

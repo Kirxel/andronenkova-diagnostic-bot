@@ -1,6 +1,7 @@
 import type { Question } from "./types";
+import type { TelegramContext } from "./lib/telegram";
 
-export const questions: Question[] = [
+const baseQuestions: Question[] = [
   {
     id: "sex",
     kind: "choice",
@@ -45,20 +46,14 @@ export const questions: Question[] = [
   },
   {
     id: "goal",
-    kind: "choice",
-    title: "Какая цель сейчас главная?",
+    kind: "multiChoice",
+    title: "Какие цели сейчас для тебя актуальны?",
+    description: "Можно выбрать несколько вариантов. Так Дарья увидит полный запрос, а не только одну формальную цель.",
     options: [
       { value: "weight-loss", label: "Снизить вес" },
       { value: "muscle-tone", label: "Подтянуть тело и стать сильнее" },
       { value: "recovery", label: "Вернуться к тренировкам после паузы" },
-      { value: "wellbeing", label: "Улучшить самочувствие и режим" },
-      {
-        value: "other",
-        label: "Свой вариант",
-        detailLabel: "Расскажи о своей цели",
-        detailPlaceholder: "Например: подготовиться к отпуску или убрать боли в спине",
-        detailRequired: true
-      }
+      { value: "wellbeing", label: "Улучшить самочувствие и режим" }
     ]
   },
   {
@@ -153,3 +148,35 @@ export const questions: Question[] = [
     ]
   }
 ];
+
+const contactQuestion: Question = {
+  id: "contactMethod",
+  kind: "choice",
+  title: "Как с тобой удобнее связаться?",
+  description:
+    "У тебя нет публичного username в Telegram, поэтому для связи после анкеты нужен телефон или профиль MAX.",
+  options: [
+    {
+      value: "phone",
+      label: "Телефон",
+      detailLabel: "Укажи номер телефона",
+      detailPlaceholder: "Например: +7 999 123-45-67",
+      detailRequired: true
+    },
+    {
+      value: "max",
+      label: "Профиль MAX",
+      detailLabel: "Укажи ник или ссылку на профиль MAX",
+      detailPlaceholder: "Например: @yourmax или https://max.ru/...",
+      detailRequired: true
+    }
+  ]
+};
+
+export function getQuestions(context: TelegramContext): Question[] {
+  if (context.username) {
+    return baseQuestions;
+  }
+
+  return [...baseQuestions, contactQuestion];
+}

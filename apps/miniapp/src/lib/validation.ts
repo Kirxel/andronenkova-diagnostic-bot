@@ -1,11 +1,35 @@
-import { questions } from "../questions";
-import type { AnswerMap, DraftAnswer, Question } from "../types";
+import type {
+  AnswerMap,
+  DraftAnswer,
+  MultiValueDraftAnswer,
+  Question,
+  SubmissionAnswers
+} from "../types";
+
+function isMultiValueAnswer(answer: DraftAnswer | undefined): answer is MultiValueDraftAnswer {
+  return Array.isArray((answer as MultiValueDraftAnswer | undefined)?.values);
+}
 
 export function validateQuestion(
   question: Question,
   answer: DraftAnswer | undefined
 ): string | null {
-  if (!answer?.value.trim()) {
+  if (question.kind === "multiChoice") {
+    if (!isMultiValueAnswer(answer) || answer.values.length === 0) {
+      return "Выбери хотя бы один вариант, чтобы продолжить";
+    }
+
+    const hasInvalidValue = answer.values.some(
+      (value) => !question.options.some((option) => option.value === value)
+    );
+    if (hasInvalidValue) {
+      return "Выбери вариант из списка";
+    }
+
+    return null;
+  }
+
+  if (!answer || !("value" in answer) || !answer.value.trim()) {
     return "Выбери вариант, чтобы продолжить";
   }
 
@@ -27,13 +51,18 @@ export function validateQuestion(
   }
 
   if (selected.detailRequired && !answer.detail?.trim()) {
-    return "Добавь пару слов, чтобы Дарья увидела контекст";
+    return question.id === "contactMethod"
+      ? "Добавь контакт, чтобы Дарья могла связаться с тобой после анкеты"
+      : "Добавь пару слов, чтобы Дарья увидела контекст";
   }
 
   return null;
 }
 
-export function getFirstIncompleteQuestionIndex(answers: AnswerMap): number {
+export function getFirstIncompleteQuestionIndex(
+  questions: Question[],
+  answers: AnswerMap
+): number {
   const firstIncomplete = questions.findIndex((question) => {
     return validateQuestion(question, answers[question.id]) !== null;
   });
@@ -41,15 +70,39 @@ export function getFirstIncompleteQuestionIndex(answers: AnswerMap): number {
   return firstIncomplete === -1 ? 0 : firstIncomplete;
 }
 
-export function serializeAnswers(answers: AnswerMap): Record<string, string | number> {
-  return questions.reduce<Record<string, string | number>>((accumulator, question) => {
+export function serializeAnswers(
+  questions: Question[],
+  answers: AnswerMap
+): SubmissionAnswers {
+  return questions.reduce<SubmissionAnswers>((accumulator, question) => {
     const answer = answers[question.id];
     if (!answer) {
       return accumulator;
     }
 
     if (question.kind === "number") {
-      accumulator[question.id] = Number(answer.value);
+      if ("value" in answer) {
+        accumulator[question.id] = Number(answer.value);
+      }
+      return accumulator;
+    }
+
+    if (question.kind === "multiChoice") {
+      if (isMultiValueAnswer(answer) && answer.values.length > 0) {
+        accumulator[question.id] = answer.values;
+      }
+      return accumulator;
+    }
+
+    if (!("value" in answer)) {
+      return accumulator;
+    }
+
+    if (question.id === "contactMethod") {
+      accumulator.contactMethod = answer.value;
+      if (answer.detail?.trim()) {
+        accumulator.contactValue = answer.detail.trim();
+      }
       return accumulator;
     }
 
@@ -63,4 +116,3 @@ export function serializeAnswers(answers: AnswerMap): Record<string, string | nu
     return accumulator;
   }, {});
 }
-

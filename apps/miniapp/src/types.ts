@@ -10,7 +10,8 @@ export type QuestionId =
   | "wellbeing"
   | "labTests"
   | "sleep"
-  | "readiness";
+  | "readiness"
+  | "contactMethod";
 
 export type QuestionOption = {
   value: string;
@@ -29,6 +30,14 @@ export type ChoiceQuestion = {
   options: QuestionOption[];
 };
 
+export type MultiChoiceQuestion = {
+  id: QuestionId;
+  kind: "multiChoice";
+  title: string;
+  description?: string;
+  options: QuestionOption[];
+};
+
 export type NumberQuestion = {
   id: QuestionId;
   kind: "number";
@@ -40,16 +49,24 @@ export type NumberQuestion = {
   unit: string;
 };
 
-export type Question = ChoiceQuestion | NumberQuestion;
+export type Question = ChoiceQuestion | MultiChoiceQuestion | NumberQuestion;
 
-export type DraftAnswer = {
+export type SingleValueDraftAnswer = {
   value: string;
   detail?: string;
 };
 
+export type MultiValueDraftAnswer = {
+  values: string[];
+};
+
+export type DraftAnswer = SingleValueDraftAnswer | MultiValueDraftAnswer;
+
 export type AnswerMap = Partial<Record<QuestionId, DraftAnswer>>;
 
-export type SubmissionAnswers = Partial<Record<QuestionId, string | number>>;
+export type SubmissionAnswers = Partial<
+  Record<QuestionId | "contactValue", string | number | string[]>
+>;
 
 export type DiagnosticSubmissionPayload = {
   initData: string;

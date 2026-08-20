@@ -15,7 +15,7 @@ class TrainerNotificationPayload:
     first_name: str | None
     username: str | None
     start_param: str | None
-    answers: dict[str, str | int | float]
+    answers: dict[str, str | int | float | list[str]]
 
 
 ANSWER_LABELS: Final[dict[str, dict[str, str]]] = {
@@ -35,7 +35,6 @@ ANSWER_LABELS: Final[dict[str, dict[str, str]]] = {
         "muscle-tone": "Подтянуть тело и стать сильнее",
         "recovery": "Вернуться к тренировкам после паузы",
         "wellbeing": "Улучшить самочувствие и режим",
-        "other": "Свой вариант",
     },
     "injuries": {
         "none": "Нет, ограничений нет",
@@ -82,6 +81,7 @@ def build_trainer_message(payload: TrainerNotificationPayload) -> str:
     display_name = payload.first_name or "Пользователь"
     username_line = f"@{payload.username}" if payload.username else "не указан"
     source_line = payload.start_param or "без метки"
+    contact_block = build_contact_block(payload.answers)
     answer_lines = [
         f"Пол: {render_answer('sex', payload.answers['sex'])}",
         f"Возраст: {render_answer('ageRange', payload.answers['ageRange'])}",
@@ -114,6 +114,7 @@ def build_trainer_message(payload: TrainerNotificationPayload) -> str:
             "Режим и готовность",
             *answer_lines[8:],
             "",
+            *contact_block,
             "Служебно",
             f"ID анкеты: {payload.submission_id}",
             f"Telegram ID: {payload.telegram_user_id}",
@@ -122,7 +123,10 @@ def build_trainer_message(payload: TrainerNotificationPayload) -> str:
     )
 
 
-def render_answer(question_id: str, value: str | int | float) -> str:
+def render_answer(question_id: str, value: str | int | float | list[str]) -> str:
+    if isinstance(value, list):
+        return ", ".join(ANSWER_LABELS.get(question_id, {}).get(item, item) for item in value)
+
     if not isinstance(value, str):
         return str(value)
 
@@ -133,6 +137,22 @@ def render_answer(question_id: str, value: str | int | float) -> str:
         return f"{label} — {detail.strip()}"
 
     return label
+
+
+def build_contact_block(answers: dict[str, str | int | float | list[str]]) -> list[str]:
+    contact_method = answers.get("contactMethod")
+    contact_value = answers.get("contactValue")
+
+    if not isinstance(contact_method, str) or not isinstance(contact_value, str):
+        return []
+
+    label = "Телефон" if contact_method == "phone" else "MAX"
+
+    return [
+        "Доп. контакт",
+        f"{label}: {contact_value}",
+        "",
+    ]
 
 
 async def send_trainer_notification(

@@ -82,7 +82,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ) from exc
 
         try:
-            validated_answers = validate_answers(request.answers)
+            validated_answers = validate_answers(
+                request.answers,
+                require_contact=verified.username is None,
+            )
         except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

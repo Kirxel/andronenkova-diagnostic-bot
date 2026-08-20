@@ -13,6 +13,56 @@ export function QuestionCard({
   error,
   onChange
 }: QuestionCardProps) {
+  if (question.kind === "multiChoice") {
+    const selectedValues = Array.isArray((answer as { values?: string[] } | undefined)?.values)
+      ? (answer as { values: string[] }).values
+      : [];
+
+    return (
+      <section className="card" aria-labelledby={`question-${question.id}`}>
+        <div className="card__eyebrow">Шаг анкеты</div>
+        <h2 id={`question-${question.id}`} className="card__title">
+          {question.title}
+        </h2>
+        {question.description ? (
+          <p className="card__description">{question.description}</p>
+        ) : null}
+
+        <fieldset className="choice-list">
+          <legend className="sr-only">{question.title}</legend>
+          {question.options.map((option) => {
+            const checked = selectedValues.includes(option.value);
+
+            return (
+              <label key={option.value} className={`choice ${checked ? "choice--active" : ""}`}>
+                <input
+                  className="choice__input"
+                  type="checkbox"
+                  name={`${question.id}-${option.value}`}
+                  value={option.value}
+                  checked={checked}
+                  onChange={() =>
+                    onChange({
+                      values: checked
+                        ? selectedValues.filter((value) => value !== option.value)
+                        : [...selectedValues, option.value]
+                    })
+                  }
+                />
+                <span className="choice__content">
+                  <span className="choice__label">{option.label}</span>
+                  {option.hint ? <span className="choice__hint">{option.hint}</span> : null}
+                </span>
+              </label>
+            );
+          })}
+        </fieldset>
+
+        {error ? <p className="field__error">{error}</p> : null}
+      </section>
+    );
+  }
+
   if (question.kind === "number") {
     return (
       <section className="card" aria-labelledby={`question-${question.id}`}>
@@ -105,4 +155,3 @@ export function QuestionCard({
     </section>
   );
 }
-

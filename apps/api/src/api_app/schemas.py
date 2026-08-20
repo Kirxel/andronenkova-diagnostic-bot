@@ -36,10 +36,9 @@ class BotStartUpsertResponse(BaseModel):
 class DiagnosticSubmissionRequest(BaseModel):
     initData: str = Field(min_length=1)
     startParam: str | None = None
-    answers: dict[str, str | int | float]
+    answers: dict[str, str | int | float | list[str]]
 
 
 class DiagnosticSubmissionResponse(BaseModel):
     submission_id: int
     status: str
-
