@@ -1,19 +1,52 @@
 :root {
   color-scheme: light;
   font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
-  --tg-bg-color: #f7efe5;
-  --tg-surface-color: rgba(255, 250, 245, 0.86);
-  --tg-text-color: #2f241f;
-  --tg-muted-color: #77675d;
-  --tg-link-color: #3b7a57;
-  --tg-accent-color: #d46a4f;
-  --tg-accent-contrast: #fff7f2;
-  --tg-highlight-color: #3b7a57;
-  --tg-error-color: #b14d42;
+  --app-bg-color: #f7efe5;
+  --app-bg-accent-start: rgba(255, 233, 215, 0.95);
+  --app-bg-accent-end: rgba(210, 232, 214, 0.72);
+  --app-bg-bottom: #efe4d8;
+  --app-surface-color: rgba(255, 250, 245, 0.86);
+  --app-surface-strong: rgba(255, 255, 255, 0.74);
+  --app-text-color: #2f241f;
+  --app-muted-color: #77675d;
+  --app-link-color: #3b7a57;
+  --app-accent-color: #d46a4f;
+  --app-accent-contrast: #fff7f2;
+  --app-highlight-color: #3b7a57;
+  --app-error-color: #b14d42;
+  --app-border-color: rgba(120, 94, 83, 0.12);
+  --app-border-strong: rgba(120, 94, 83, 0.14);
+  --app-shadow-color: rgba(85, 52, 38, 0.08);
+  --app-shadow-strong: rgba(80, 49, 35, 0.12);
+  --app-track-color: rgba(124, 102, 91, 0.12);
+  --app-focus-ring: rgba(59, 122, 87, 0.12);
   --safe-area-top: 0px;
   --safe-area-bottom: 0px;
   --safe-area-left: 0px;
   --safe-area-right: 0px;
+}
+
+:root[data-telegram-theme="dark"] {
+  color-scheme: dark;
+  --app-bg-color: #161616;
+  --app-bg-accent-start: rgba(205, 140, 84, 0.16);
+  --app-bg-accent-end: rgba(59, 122, 87, 0.18);
+  --app-bg-bottom: #0d0f11;
+  --app-surface-color: rgba(27, 31, 35, 0.92);
+  --app-surface-strong: rgba(34, 39, 45, 0.96);
+  --app-text-color: #f6efe8;
+  --app-muted-color: #c9b8ab;
+  --app-link-color: #8bd3aa;
+  --app-accent-color: #f08b68;
+  --app-accent-contrast: #1b130f;
+  --app-highlight-color: #9ed8b5;
+  --app-error-color: #ff9b8c;
+  --app-border-color: rgba(255, 255, 255, 0.09);
+  --app-border-strong: rgba(255, 255, 255, 0.13);
+  --app-shadow-color: rgba(0, 0, 0, 0.28);
+  --app-shadow-strong: rgba(0, 0, 0, 0.35);
+  --app-track-color: rgba(255, 255, 255, 0.12);
+  --app-focus-ring: rgba(139, 211, 170, 0.22);
 }
 
 * {
@@ -29,10 +62,10 @@ body,
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(255, 233, 215, 0.95), transparent 32%),
-    radial-gradient(circle at top right, rgba(210, 232, 214, 0.72), transparent 28%),
-    linear-gradient(180deg, var(--tg-bg-color) 0%, #efe4d8 100%);
-  color: var(--tg-text-color);
+    radial-gradient(circle at top left, var(--app-bg-accent-start), transparent 32%),
+    radial-gradient(circle at top right, var(--app-bg-accent-end), transparent 28%),
+    linear-gradient(180deg, var(--app-bg-color) 0%, var(--app-bg-bottom) 100%);
+  color: var(--app-text-color);
 }
 
 button,
@@ -69,7 +102,12 @@ textarea {
   padding: 24px 22px;
   border-radius: 28px;
   background: linear-gradient(145deg, rgba(255, 251, 248, 0.9), rgba(244, 233, 223, 0.78));
-  box-shadow: 0 24px 60px rgba(80, 49, 35, 0.12);
+  box-shadow: 0 24px 60px var(--app-shadow-strong);
+  border: 1px solid var(--app-border-color);
+}
+
+:root[data-telegram-theme="dark"] .hero {
+  background: linear-gradient(145deg, rgba(33, 38, 43, 0.94), rgba(20, 23, 27, 0.92));
 }
 
 .hero::after {
@@ -88,7 +126,7 @@ textarea {
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(59, 122, 87, 0.12);
-  color: var(--tg-highlight-color);
+  color: var(--app-highlight-color);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -104,7 +142,7 @@ textarea {
 .hero__lead {
   margin: 0;
   max-width: 32ch;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   font-size: 15px;
   line-height: 1.55;
 }
@@ -113,15 +151,16 @@ textarea {
   margin-bottom: 16px;
   padding: 14px 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.54);
+  background: var(--app-surface-strong);
   backdrop-filter: blur(14px);
+  border: 1px solid var(--app-border-color);
 }
 
 .progress__meta {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   font-size: 13px;
 }
 
@@ -129,7 +168,7 @@ textarea {
   overflow: hidden;
   height: 8px;
   border-radius: 999px;
-  background: rgba(124, 102, 91, 0.12);
+  background: var(--app-track-color);
 }
 
 .progress__fill {
@@ -142,16 +181,16 @@ textarea {
 .card {
   margin-bottom: 16px;
   padding: 22px 18px;
-  border: 1px solid rgba(120, 94, 83, 0.08);
+  border: 1px solid var(--app-border-color);
   border-radius: 26px;
-  background: var(--tg-surface-color);
+  background: var(--app-surface-color);
   backdrop-filter: blur(16px);
-  box-shadow: 0 20px 45px rgba(85, 52, 38, 0.08);
+  box-shadow: 0 20px 45px var(--app-shadow-color);
 }
 
 .card__eyebrow {
   margin-bottom: 10px;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -167,7 +206,7 @@ textarea {
 
 .card__description {
   margin: 0 0 18px;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   line-height: 1.6;
 }
 
@@ -182,8 +221,8 @@ textarea {
 .choice {
   display: block;
   border-radius: 20px;
-  border: 1px solid rgba(120, 94, 83, 0.12);
-  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-strong);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -215,7 +254,7 @@ textarea {
 .choice__hint {
   display: block;
   margin-top: 6px;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   font-size: 14px;
 }
 
@@ -226,7 +265,7 @@ textarea {
 .field__label {
   display: block;
   margin-bottom: 8px;
-  color: var(--tg-muted-color);
+  color: var(--app-muted-color);
   font-size: 14px;
   font-weight: 600;
 }
@@ -235,9 +274,9 @@ textarea {
 .field__textarea {
   width: 100%;
   padding: 15px 16px;
-  border: 1px solid rgba(120, 94, 83, 0.14);
+  border: 1px solid var(--app-border-strong);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--app-surface-strong);
   color: inherit;
   outline: none;
 }
@@ -245,7 +284,7 @@ textarea {
 .field__input:focus,
 .field__textarea:focus {
   border-color: rgba(59, 122, 87, 0.45);
-  box-shadow: 0 0 0 4px rgba(59, 122, 87, 0.12);
+  box-shadow: 0 0 0 4px var(--app-focus-ring);
 }
 
 .field__textarea {
@@ -255,7 +294,7 @@ textarea {
 
 .field__error {
   margin: 12px 0 0;
-  color: var(--tg-error-color);
+  color: var(--app-error-color);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -290,15 +329,15 @@ textarea {
 }
 
 .button--primary {
-  color: var(--tg-accent-contrast);
-  background: linear-gradient(135deg, var(--tg-accent-color), #cd8c54);
+  color: var(--app-accent-contrast);
+  background: linear-gradient(135deg, var(--app-accent-color), #cd8c54);
   box-shadow: 0 14px 28px rgba(212, 106, 79, 0.25);
 }
 
 .button--ghost {
-  color: var(--tg-text-color);
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(120, 94, 83, 0.12);
+  color: var(--app-text-color);
+  background: var(--app-surface-strong);
+  border: 1px solid var(--app-border-color);
 }
 
 @media (max-width: 480px) {
@@ -317,4 +356,3 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
-

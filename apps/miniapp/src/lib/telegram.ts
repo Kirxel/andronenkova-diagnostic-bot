@@ -17,6 +17,8 @@ type TelegramSafeAreaInset = {
   right?: number;
 };
 
+type TelegramThemeMode = "light" | "dark";
+
 type TelegramWebApp = {
   initData?: string;
   themeParams?: TelegramThemeParams;
@@ -38,6 +40,7 @@ export type TelegramContext = {
   initData: string;
   startParam: string | null;
   theme: TelegramThemeParams;
+  themeMode: TelegramThemeMode;
   safeArea: Required<TelegramSafeAreaInset>;
 };
 
@@ -111,12 +114,14 @@ function waitForTelegramWebApp(timeoutMs: number): Promise<void> {
 export function readTelegramContext(): TelegramContext {
   const webApp = getTelegramWebApp();
   const params = new URLSearchParams(window.location.search);
+  const theme = webApp?.themeParams ?? {};
 
   return {
     isAvailable: Boolean(webApp),
     initData: webApp?.initData ?? "",
     startParam: params.get("tgWebAppStartParam"),
-    theme: webApp?.themeParams ?? {},
+    theme,
+    themeMode: resolveThemeMode(theme),
     safeArea: {
       top: webApp?.safeAreaInset?.top ?? 0,
       bottom: webApp?.safeAreaInset?.bottom ?? 0,
@@ -151,38 +156,81 @@ export function initializeTelegramApp(sync: () => void): () => void {
 
 export function applyTelegramTheme(context: TelegramContext): void {
   const root = document.documentElement;
-  const { theme, safeArea } = context;
+  const { theme, themeMode, safeArea } = context;
 
-  if (theme.bg_color) {
-    root.style.setProperty("--tg-bg-color", theme.bg_color);
-  }
-  if (theme.secondary_bg_color) {
-    root.style.setProperty("--tg-surface-color", theme.secondary_bg_color);
-  }
-  if (theme.text_color) {
-    root.style.setProperty("--tg-text-color", theme.text_color);
-  }
-  if (theme.hint_color) {
-    root.style.setProperty("--tg-muted-color", theme.hint_color);
-  }
-  if (theme.button_color) {
-    root.style.setProperty("--tg-accent-color", theme.button_color);
-  }
-  if (theme.button_text_color) {
-    root.style.setProperty("--tg-accent-contrast", theme.button_text_color);
-  }
-  if (theme.link_color) {
-    root.style.setProperty("--tg-link-color", theme.link_color);
-  }
-  if (theme.accent_text_color) {
-    root.style.setProperty("--tg-highlight-color", theme.accent_text_color);
-  }
-  if (theme.destructive_text_color) {
-    root.style.setProperty("--tg-error-color", theme.destructive_text_color);
-  }
+  root.dataset.telegramTheme = themeMode;
+
+  setThemeVariable(root, "--app-accent-color", theme.button_color);
+  setThemeVariable(root, "--app-accent-contrast", theme.button_text_color);
+  setThemeVariable(root, "--app-link-color", theme.link_color);
+  setThemeVariable(root, "--app-highlight-color", theme.accent_text_color);
+  setThemeVariable(root, "--app-error-color", theme.destructive_text_color);
 
   root.style.setProperty("--safe-area-top", `${safeArea.top}px`);
   root.style.setProperty("--safe-area-bottom", `${safeArea.bottom}px`);
   root.style.setProperty("--safe-area-left", `${safeArea.left}px`);
   root.style.setProperty("--safe-area-right", `${safeArea.right}px`);
+}
+
+function setThemeVariable(root: HTMLElement, variableName: string, value: string | undefined) {
+  if (value) {
+    root.style.setProperty(variableName, value);
+    return;
+  }
+
+  root.style.removeProperty(variableName);
+}
+
+function resolveThemeMode(theme: TelegramThemeParams): TelegramThemeMode {
+  const bgColor = theme.bg_color ?? theme.secondary_bg_color;
+  const parsed = bgColor ? parseRgbColor(bgColor) : null;
+
+  if (!parsed) {
+    return "light";
+  }
+
+  return getRelativeLuminance(parsed) < 0.5 ? "dark" : "light";
+}
+
+function parseRgbColor(input: string): [number, number, number] | null {
+  const normalized = input.trim().toLowerCase();
+
+  if (/^#([0-9a-f]{3}){1,2}$/.test(normalized)) {
+    const hex = normalized.slice(1);
+    const expanded = hex.length === 3
+      ? hex
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : hex;
+
+    return [
+      Number.parseInt(expanded.slice(0, 2), 16),
+      Number.parseInt(expanded.slice(2, 4), 16),
+      Number.parseInt(expanded.slice(4, 6), 16)
+    ];
+  }
+
+  const rgbMatch = normalized.match(
+    /^rgba?\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})(?:\s*,\s*[\d.]+\s*)?\)$/
+  );
+
+  if (!rgbMatch) {
+    return null;
+  }
+
+  return [
+    Number.parseInt(rgbMatch[1], 10),
+    Number.parseInt(rgbMatch[2], 10),
+    Number.parseInt(rgbMatch[3], 10)
+  ];
+}
+
+function getRelativeLuminance([red, green, blue]: [number, number, number]): number {
+  const channels = [red, green, blue].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
