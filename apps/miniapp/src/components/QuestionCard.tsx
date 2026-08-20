@@ -1,4 +1,9 @@
-import type { DraftAnswer, Question } from "../types";
+import type {
+  DraftAnswer,
+  MultiValueDraftAnswer,
+  Question,
+  SingleValueDraftAnswer
+} from "../types";
 
 type QuestionCardProps = {
   question: Question;
@@ -7,6 +12,14 @@ type QuestionCardProps = {
   onChange: (next: DraftAnswer) => void;
 };
 
+function isMultiValueAnswer(answer: DraftAnswer | undefined): answer is MultiValueDraftAnswer {
+  return Array.isArray((answer as MultiValueDraftAnswer | undefined)?.values);
+}
+
+function isSingleValueAnswer(answer: DraftAnswer | undefined): answer is SingleValueDraftAnswer {
+  return typeof (answer as SingleValueDraftAnswer | undefined)?.value === "string";
+}
+
 export function QuestionCard({
   question,
   answer,
@@ -14,9 +27,7 @@ export function QuestionCard({
   onChange
 }: QuestionCardProps) {
   if (question.kind === "multiChoice") {
-    const selectedValues = Array.isArray((answer as { values?: string[] } | undefined)?.values)
-      ? (answer as { values: string[] }).values
-      : [];
+    const selectedValues = isMultiValueAnswer(answer) ? answer.values : [];
 
     return (
       <section className="card" aria-labelledby={`question-${question.id}`}>
@@ -64,6 +75,8 @@ export function QuestionCard({
   }
 
   if (question.kind === "number") {
+    const singleAnswer = isSingleValueAnswer(answer) ? answer : undefined;
+
     return (
       <section className="card" aria-labelledby={`question-${question.id}`}>
         <div className="card__eyebrow">Шаг анкеты</div>
@@ -83,7 +96,7 @@ export function QuestionCard({
             min={question.min}
             max={question.max}
             placeholder={question.placeholder}
-            value={answer?.value ?? ""}
+            value={singleAnswer?.value ?? ""}
             onChange={(event) => onChange({ value: event.target.value })}
           />
         </label>
@@ -92,7 +105,8 @@ export function QuestionCard({
     );
   }
 
-  const selected = question.options.find((option) => option.value === answer?.value);
+  const singleAnswer = isSingleValueAnswer(answer) ? answer : undefined;
+  const selected = question.options.find((option) => option.value === singleAnswer?.value);
 
   return (
     <section className="card" aria-labelledby={`question-${question.id}`}>
@@ -107,7 +121,7 @@ export function QuestionCard({
       <fieldset className="choice-list">
         <legend className="sr-only">{question.title}</legend>
         {question.options.map((option) => {
-          const checked = answer?.value === option.value;
+          const checked = singleAnswer?.value === option.value;
 
           return (
             <label key={option.value} className={`choice ${checked ? "choice--active" : ""}`}>
@@ -120,7 +134,7 @@ export function QuestionCard({
                 onChange={() =>
                   onChange({
                     value: option.value,
-                    detail: checked ? answer?.detail : ""
+                    detail: checked ? singleAnswer?.detail : ""
                   })
                 }
               />
@@ -140,10 +154,10 @@ export function QuestionCard({
             className="field__textarea"
             rows={4}
             placeholder={selected.detailPlaceholder}
-            value={answer?.detail ?? ""}
+            value={singleAnswer?.detail ?? ""}
             onChange={(event) =>
               onChange({
-                value: answer?.value ?? selected.value,
+                value: singleAnswer?.value ?? selected.value,
                 detail: event.target.value
               })
             }
