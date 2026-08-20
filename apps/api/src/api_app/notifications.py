@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Final
 
 import httpx
 
@@ -17,39 +18,121 @@ class TrainerNotificationPayload:
     answers: dict[str, str | int | float]
 
 
+ANSWER_LABELS: Final[dict[str, dict[str, str]]] = {
+    "sex": {
+        "female": "Женщина",
+        "male": "Мужчина",
+    },
+    "ageRange": {
+        "under-16": "До 16 лет",
+        "18-24": "18-24",
+        "25-34": "25-34",
+        "35-44": "35-44",
+        "45+": "45+",
+    },
+    "goal": {
+        "weight-loss": "Снизить вес",
+        "muscle-tone": "Подтянуть тело и стать сильнее",
+        "recovery": "Вернуться к тренировкам после паузы",
+        "wellbeing": "Улучшить самочувствие и режим",
+        "other": "Свой вариант",
+    },
+    "injuries": {
+        "none": "Нет, ограничений нет",
+        "has-limitations": "Есть ограничения",
+        "other": "Свой вариант",
+    },
+    "experience": {
+        "new": "Только начинаю",
+        "returning": "Раньше тренировался(ась), сейчас возвращаюсь",
+        "regular": "Тренируюсь регулярно",
+    },
+    "nutrition": {
+        "no": "Нет, пока не слежу",
+        "sometimes": "Иногда слежу",
+        "yes": "Да, отслеживаю стабильно",
+    },
+    "wellbeing": {
+        "great": "В целом хорошо",
+        "tired": "Часто не хватает энергии",
+        "stressed": "Есть стресс и перегруз",
+        "other": "Свой вариант",
+    },
+    "labTests": {
+        "regularly": "Да, проверяюсь регулярно",
+        "sometimes": "Иногда",
+        "never": "Почти никогда",
+    },
+    "sleep": {
+        "<6": "Меньше 6 часов",
+        "6-7": "6-7 часов",
+        "7-8": "7-8 часов",
+        "8+": "8 часов и больше",
+    },
+    "readiness": {
+        "now": "Хочу начать сейчас",
+        "this-week": "На этой неделе",
+        "this-month": "В ближайший месяц",
+        "not-sure": "Пока присматриваюсь",
+    },
+}
+
+
 def build_trainer_message(payload: TrainerNotificationPayload) -> str:
     display_name = payload.first_name or "Пользователь"
-    username_line = f"@{payload.username}" if payload.username else "username не указан"
-    source_line = payload.start_param or "без метки источника"
-
+    username_line = f"@{payload.username}" if payload.username else "не указан"
+    source_line = payload.start_param or "без метки"
     answer_lines = [
-        f"Пол: {payload.answers['sex']}",
-        f"Возраст: {payload.answers['ageRange']}",
-        f"Рост: {payload.answers['heightCm']} см",
-        f"Вес: {payload.answers['weightKg']} кг",
-        f"Цель: {payload.answers['goal']}",
-        f"Ограничения: {payload.answers['injuries']}",
-        f"Опыт: {payload.answers['experience']}",
-        f"Питание: {payload.answers['nutrition']}",
-        f"Состояние: {payload.answers['wellbeing']}",
-        f"Анализы: {payload.answers['labTests']}",
-        f"Сон: {payload.answers['sleep']}",
-        f"Готовность: {payload.answers['readiness']}",
+        f"Пол: {render_answer('sex', payload.answers['sex'])}",
+        f"Возраст: {render_answer('ageRange', payload.answers['ageRange'])}",
+        f"Рост / вес: {payload.answers['heightCm']} см / {payload.answers['weightKg']} кг",
+        f"Цель: {render_answer('goal', payload.answers['goal'])}",
+        f"Ограничения: {render_answer('injuries', payload.answers['injuries'])}",
+        f"Опыт: {render_answer('experience', payload.answers['experience'])}",
+        f"Питание: {render_answer('nutrition', payload.answers['nutrition'])}",
+        f"Самочувствие: {render_answer('wellbeing', payload.answers['wellbeing'])}",
+        f"Анализы: {render_answer('labTests', payload.answers['labTests'])}",
+        f"Сон: {render_answer('sleep', payload.answers['sleep'])}",
+        f"Готовность: {render_answer('readiness', payload.answers['readiness'])}",
     ]
 
     return "\n".join(
         [
-            "Новая диагностическая анкета",
+            "Новая анкета на диагностику",
             "",
-            f"Submission ID: {payload.submission_id}",
-            f"Telegram user ID: {payload.telegram_user_id}",
-            f"Имя: {display_name}",
+            f"Клиент: {display_name}",
             f"Username: {username_line}",
-            f"Источник: {source_line}",
             "",
-            *answer_lines,
+            "Профиль",
+            answer_lines[0],
+            answer_lines[1],
+            answer_lines[2],
+            "",
+            "Запрос и контекст",
+            *answer_lines[3:8],
+            "",
+            "Режим и готовность",
+            *answer_lines[8:],
+            "",
+            "Служебно",
+            f"ID анкеты: {payload.submission_id}",
+            f"Telegram ID: {payload.telegram_user_id}",
+            f"Источник: {source_line}",
         ]
     )
+
+
+def render_answer(question_id: str, value: str | int | float) -> str:
+    if not isinstance(value, str):
+        return str(value)
+
+    prefix, separator, detail = value.partition(":")
+    label = ANSWER_LABELS.get(question_id, {}).get(prefix.strip(), prefix.strip())
+
+    if separator and detail.strip():
+        return f"{label} — {detail.strip()}"
+
+    return label
 
 
 async def send_trainer_notification(
