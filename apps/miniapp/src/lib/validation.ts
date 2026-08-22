@@ -1,5 +1,6 @@
 import type {
   AnswerMap,
+  ContactDraftAnswer,
   DraftAnswer,
   MultiValueDraftAnswer,
   Question,
@@ -10,10 +11,23 @@ function isMultiValueAnswer(answer: DraftAnswer | undefined): answer is MultiVal
   return Array.isArray((answer as MultiValueDraftAnswer | undefined)?.values);
 }
 
+function isContactAnswer(answer: DraftAnswer | undefined): answer is ContactDraftAnswer {
+  return Boolean(
+    answer &&
+      typeof answer === "object" &&
+      !("value" in answer) &&
+      !("values" in answer)
+  );
+}
+
 export function validateQuestion(
   question: Question,
   answer: DraftAnswer | undefined
 ): string | null {
+  if (question.kind === "contact") {
+    return null;
+  }
+
   if (question.kind === "multiChoice") {
     if (!isMultiValueAnswer(answer) || answer.values.length === 0) {
       return "Выбери хотя бы один вариант, чтобы продолжить";
@@ -51,9 +65,7 @@ export function validateQuestion(
   }
 
   if (selected.detailRequired && !answer.detail?.trim()) {
-    return question.id === "contactMethod"
-      ? "Добавь контакт, чтобы Дарья могла связаться с тобой после анкеты"
-      : "Добавь пару слов, чтобы Дарья увидела контекст";
+    return "Добавь пару слов, чтобы Дарья увидела контекст";
   }
 
   return null;
@@ -80,6 +92,18 @@ export function serializeAnswers(
       return accumulator;
     }
 
+    if (question.kind === "contact") {
+      if (isContactAnswer(answer)) {
+        if (answer.phone?.trim()) {
+          accumulator.contactPhone = answer.phone.trim();
+        }
+        if (answer.maxProfile?.trim()) {
+          accumulator.contactMax = answer.maxProfile.trim();
+        }
+      }
+      return accumulator;
+    }
+
     if (question.kind === "number") {
       if ("value" in answer) {
         accumulator[question.id] = Number(answer.value);
@@ -95,14 +119,6 @@ export function serializeAnswers(
     }
 
     if (!("value" in answer)) {
-      return accumulator;
-    }
-
-    if (question.id === "contactMethod") {
-      accumulator.contactMethod = answer.value;
-      if (answer.detail?.trim()) {
-        accumulator.contactValue = answer.detail.trim();
-      }
       return accumulator;
     }
 

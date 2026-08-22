@@ -1,4 +1,5 @@
 import type {
+  ContactDraftAnswer,
   DraftAnswer,
   MultiValueDraftAnswer,
   Question,
@@ -20,12 +21,74 @@ function isSingleValueAnswer(answer: DraftAnswer | undefined): answer is SingleV
   return typeof (answer as SingleValueDraftAnswer | undefined)?.value === "string";
 }
 
+function isContactAnswer(answer: DraftAnswer | undefined): answer is ContactDraftAnswer {
+  return Boolean(
+    answer &&
+      typeof answer === "object" &&
+      !("value" in answer) &&
+      !("values" in answer)
+  );
+}
+
 export function QuestionCard({
   question,
   answer,
   error,
   onChange
 }: QuestionCardProps) {
+  if (question.kind === "contact") {
+    const contactAnswer = isContactAnswer(answer) ? answer : {};
+
+    return (
+      <section className="card" aria-labelledby={`question-${question.id}`}>
+        <div className="card__eyebrow">Шаг анкеты</div>
+        <h2 id={`question-${question.id}`} className="card__title">
+          {question.title}
+        </h2>
+        {question.description ? (
+          <p className="card__description">{question.description}</p>
+        ) : null}
+
+        <div className="contact-fields">
+          <label className="field">
+            <span className="field__label">{question.phoneLabel}</span>
+            <input
+              className="field__input"
+              inputMode="tel"
+              type="tel"
+              placeholder={question.phonePlaceholder}
+              value={contactAnswer.phone ?? ""}
+              onChange={(event) =>
+                onChange({
+                  phone: event.target.value,
+                  maxProfile: contactAnswer.maxProfile ?? ""
+                })
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span className="field__label">{question.maxLabel}</span>
+            <input
+              className="field__input"
+              type="text"
+              placeholder={question.maxPlaceholder}
+              value={contactAnswer.maxProfile ?? ""}
+              onChange={(event) =>
+                onChange({
+                  phone: contactAnswer.phone ?? "",
+                  maxProfile: event.target.value
+                })
+              }
+            />
+          </label>
+        </div>
+
+        {error ? <p className="field__error">{error}</p> : null}
+      </section>
+    );
+  }
+
   if (question.kind === "multiChoice") {
     const selectedValues = isMultiValueAnswer(answer) ? answer.values : [];
 

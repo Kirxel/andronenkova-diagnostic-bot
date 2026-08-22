@@ -140,19 +140,27 @@ def render_answer(question_id: str, value: str | int | float | list[str]) -> str
 
 
 def build_contact_block(answers: dict[str, str | int | float | list[str]]) -> list[str]:
+    contact_phone = answers.get("contactPhone")
+    contact_max = answers.get("contactMax")
     contact_method = answers.get("contactMethod")
     contact_value = answers.get("contactValue")
 
-    if not isinstance(contact_method, str) or not isinstance(contact_value, str):
+    lines: list[str] = []
+
+    if isinstance(contact_phone, str) and contact_phone.strip():
+        lines.append(f"Телефон: {contact_phone.strip()}")
+
+    if isinstance(contact_max, str) and contact_max.strip():
+        lines.append(f"MAX: {contact_max.strip()}")
+
+    if not lines and isinstance(contact_method, str) and isinstance(contact_value, str):
+        label = "Телефон" if contact_method == "phone" else "MAX"
+        lines.append(f"{label}: {contact_value}")
+
+    if not lines:
         return []
 
-    label = "Телефон" if contact_method == "phone" else "MAX"
-
-    return [
-        "Доп. контакт",
-        f"{label}: {contact_value}",
-        "",
-    ]
+    return ["Доп. контакт", *lines, ""]
 
 
 async def send_trainer_notification(

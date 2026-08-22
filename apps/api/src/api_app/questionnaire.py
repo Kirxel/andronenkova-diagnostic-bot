@@ -30,6 +30,8 @@ BASE_QUESTION_RULES: dict[str, dict[str, Any]] = {
 }
 
 OPTIONAL_QUESTION_RULES: dict[str, dict[str, Any]] = {
+    "contactPhone": {"type": "text"},
+    "contactMax": {"type": "text"},
     "contactMethod": {"type": "choice", "choices": {"phone", "max"}},
     "contactValue": {"type": "text"},
 }
@@ -58,9 +60,8 @@ def validate_answers(
 
     has_contact_method = "contactMethod" in answers
     has_contact_value = "contactValue" in answers
-
-    if require_contact and (not has_contact_method or not has_contact_value):
-        raise ValueError("Missing contact details for user without public username")
+    has_contact_phone = "contactPhone" in answers
+    has_contact_max = "contactMax" in answers
 
     if has_contact_method != has_contact_value:
         raise ValueError("contactMethod and contactValue must be provided together")
@@ -72,6 +73,18 @@ def validate_answers(
         normalized["contactValue"] = _normalize_answer(
             "contactValue", answers["contactValue"], OPTIONAL_QUESTION_RULES["contactValue"]
         )
+
+    if has_contact_phone:
+        normalized["contactPhone"] = _normalize_answer(
+            "contactPhone", answers["contactPhone"], OPTIONAL_QUESTION_RULES["contactPhone"]
+        )
+
+    if has_contact_max:
+        normalized["contactMax"] = _normalize_answer(
+            "contactMax", answers["contactMax"], OPTIONAL_QUESTION_RULES["contactMax"]
+        )
+
+    _ = require_contact
 
     return normalized
 

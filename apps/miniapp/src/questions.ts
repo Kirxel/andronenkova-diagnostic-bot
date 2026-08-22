@@ -150,33 +150,18 @@ const baseQuestions: Question[] = [
 ];
 
 const contactQuestion: Question = {
-  id: "contactMethod",
-  kind: "choice",
-  title: "Как с тобой удобнее связаться?",
+  id: "contact",
+  kind: "contact",
+  title: "Контакты для связи",
   description:
-    "У тебя нет публичного username в Telegram, поэтому для связи после анкеты нужен телефон или профиль MAX.",
-  options: [
-    {
-      value: "phone",
-      label: "Телефон",
-      detailLabel: "Укажи номер телефона",
-      detailPlaceholder: "Например: +7 999 123-45-67",
-      detailRequired: true
-    },
-    {
-      value: "max",
-      label: "Профиль MAX",
-      detailLabel: "Укажи ник или ссылку на профиль MAX",
-      detailPlaceholder: "Например: @yourmax или https://max.ru/...",
-      detailRequired: true
-    }
-  ]
+    "Если хочешь, можешь оставить телефон и ссылку или ник в MAX. Это не обязательно, но поможет Дарье быстрее связаться с тобой.",
+  phoneLabel: "Телефон",
+  phonePlaceholder: "Например: +7 999 123-45-67",
+  maxLabel: "MAX: ник или ссылка",
+  maxPlaceholder: "Например: @yourmax или https://max.ru/..."
 };
 
 export function getQuestions(context: TelegramContext): Question[] {
-  if (context.username) {
-    return baseQuestions;
-  }
-
+  void context;
   return [...baseQuestions, contactQuestion];
 }

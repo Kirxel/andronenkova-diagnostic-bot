@@ -127,7 +127,7 @@ describe("App", () => {
     expect(screen.getByText("Выбери хотя бы один вариант, чтобы продолжить")).toBeInTheDocument();
   });
 
-  it("shows contact step without username and submits contact data", async () => {
+  it("shows optional contact step and submits filled contact data", async () => {
     render(<App />);
     const user = userEvent.setup();
 
@@ -135,11 +135,11 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
 
     expect(
-      screen.getByRole("heading", { name: "Как с тобой удобнее связаться?" })
+      screen.getByRole("heading", { name: "Контакты для связи" })
     ).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("Телефон"));
-    await user.type(screen.getByLabelText("Укажи номер телефона"), "+7 999 123-45-67");
+    await user.type(screen.getByLabelText("Телефон"), "+7 999 123-45-67");
+    await user.type(screen.getByLabelText("MAX: ник или ссылка"), "@kirill_max");
     await user.click(screen.getByRole("button", { name: "Отправить анкету" }));
 
     expect(api.submitDiagnostic).toHaveBeenCalledTimes(1);
@@ -147,28 +147,33 @@ describe("App", () => {
       expect.objectContaining({
         answers: expect.objectContaining({
           goal: ["weight-loss", "wellbeing"],
-          contactMethod: "phone",
-          contactValue: "+7 999 123-45-67"
+          contactPhone: "+7 999 123-45-67",
+          contactMax: "@kirill_max"
         })
       })
     );
     expect(await screen.findByText("Анкета отправлена")).toBeInTheDocument();
   });
 
-  it("skips contact step when telegram username exists", async () => {
+  it("shows contact step even when telegram username exists and allows empty submit", async () => {
     setTelegramUser({ id: 1, username: "kirill", first_name: "Кирилл" });
     render(<App />);
     const user = userEvent.setup();
 
     await fillBaseFlow(user);
+    await user.click(screen.getByRole("button", { name: "Продолжить" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Контакты для связи" })
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Отправить анкету" }));
 
     expect(api.submitDiagnostic).toHaveBeenCalledTimes(1);
     expect(api.submitDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({
         answers: expect.not.objectContaining({
-          contactMethod: expect.anything(),
-          contactValue: expect.anything()
+          contactPhone: expect.anything(),
+          contactMax: expect.anything()
         })
       })
     );
